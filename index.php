@@ -34,6 +34,9 @@
             ['2024-08-01', 5000, 65696, 0.01048],
             ['2024-08-30', 5000, 59070, 0.0119],
             ['2024-09-30', 5000, 64520, 0.01115],
+            ['2024-10-31', 5000, 71142, 0.00991],
+            ['2024-11-28', 5000, 95640, 0.00720],
+            ['2024-12-30', 5000, 93830, 0.00733]
         ];
 
         $total_fiat = 0;
@@ -61,10 +64,26 @@
     
         $total_market_value = $total_bitcoin * $current_price;
 
+        // 使用 cURL 抓取网页内容
+        function getExchangeRate() {
+            $url = 'https://v6.exchangerate-api.com/v6/ea5008a67b6df50f3b2c55cd/latest/USD';
+            $response = file_get_contents($url);
+            $data = json_decode($response, true);
+            $rate = $data["conversion_rates"]["CNY"];
+            // 检查响应内容
+            if ($response === false) {
+                return null;
+            } else {
+                return $rate;
+            }
+        }
+        
+        // 获取汇率
+        $rate = getExchangeRate();
         echo "<tr class='total-row'>";
         echo "<td>总计</td>";
         echo "<td>$total_fiat</td>";
-        echo "<td>均价(RMB): ".round($total_fiat/$total_bitcoin,0)."</td>";
+        echo "<td>均价($): ".round($total_fiat/$total_bitcoin/$rate,0)."</td>";
         echo "<td>$total_bitcoin</td>";
         echo "</tr>";
         ?>
@@ -74,6 +93,16 @@
     <p><?php echo number_format($current_price, 2); ?> 美元</p>
 
     <h2>总市值</h2>
-    <p>总购买的比特币按当前价格计算的总市值: <?php echo number_format($total_market_value, 2); ?> 美元</p>
+    <p>总购买的比特币按当前价格计算的总市值: <?php echo number_format($total_market_value*$rate, 2); ?> 人民币</p>
+    
+    <h2>浮动盈亏</h2>
+    <p><?php
+    if ($total_market_value*$rate > 0) {
+        echo "<b>+</b>";
+    } else {
+        echo "<b>-</b>";
+    }
+    echo "<b>".number_format(($total_market_value*$rate-$total_fiat), 2)."</b>";
+    ?> 人民币</p>
 </body>
 </html>
