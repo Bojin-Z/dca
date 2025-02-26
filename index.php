@@ -36,7 +36,9 @@
             ['2024-09-30', 5000, 64520, 0.01115],
             ['2024-10-31', 5000, 71142, 0.00991],
             ['2024-11-28', 5000, 95640, 0.00720],
-            ['2024-12-30', 5000, 93830, 0.00733]
+            ['2024-12-30', 5000, 93830, 0.00733],
+            ['2024-1-31', 5000, 104282, 0.00659],
+            ['2024-2-26', 5000, 86810, 0.00783],
         ];
 
         $total_fiat = 0;
@@ -56,11 +58,37 @@
 
         // 调用API获取当前比特币价格
         date_default_timezone_set('Asia/Shanghai');
-        $current_time = date('Y-m-d H:i:s');
-        $api_url = "https://api.coindesk.com/v1/bpi/currentprice.json";
-        $response = file_get_contents($api_url);
-        $data = json_decode($response, true);
-        $current_price = $data["bpi"]["USD"]["rate_float"];
+        function getLastPrice() {
+            // API 请求 URL
+            $url = "https://open-api.coinank.com/api/instruments/getLastPrice?symbol=BTCUSDT&exchange=Binance&productType=SPOT";
+        
+            // 设置请求头
+            $headers = [
+                "accept: application/json",
+                "apikey: bd19670d242642f6b280ccfaf806166b"
+            ];
+        
+            // 初始化 cURL
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        
+            // 发送请求并获取响应
+            $response = curl_exec($ch);
+            curl_close($ch);
+        
+            // 解析 JSON
+            $data = json_decode($response, true);
+        
+            // 返回 lastPrice
+            return isset($data['data']['lastPrice']) ? $data['data']['lastPrice'] : null;
+        }
+        function get_human_readable_time() {
+            return date("Y-m-d H:i:s");  // 格式：2025-02-16 14:30:45
+        }
+        $current_time = get_human_readable_time();
+        $current_price = getLastPrice();
     
         $total_market_value = $total_bitcoin * $current_price;
 
